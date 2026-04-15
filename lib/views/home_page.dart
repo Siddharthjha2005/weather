@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:provider/provider.dart';
 import 'package:weather/DateTime%20Format/dates_format.dart';
 import 'package:weather/Theme/app_fonts.dart';
@@ -13,14 +15,26 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
+  bool isLoading = false;
+
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    context.read<ProviderService>().getWeather();
-    context.read<ProviderService>().getHourly();
-    context.read<ProviderService>().getDayWise();
+    getAllData();
+  }
+
+  void getAllData() async{
+    setState(() {
+      isLoading = true;
+    });
+    await context.read<ProviderService>().getWeather();
+    await context.read<ProviderService>().getHourly();
+    await context.read<ProviderService>().getDayWise();
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
@@ -28,7 +42,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.blue.shade200,
       body: SafeArea(
-        child: Container(
+        child: isLoading?Center(child: CircularProgressIndicator(),):Container(
           padding: EdgeInsets.all(10),
           child: Stack(
             children: [
@@ -36,12 +50,15 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Consumer<ProviderService>(
                     builder: (ctx, value, child) {
-                      var data = value.getWeatherData();
+                      var data = value.weatherData();
                       var wind = data[0].wind * 3.6;
                       var dt = DateTime.parse(data[0].dayDate);
                       String day = DatesFormat().extractDay(dt);
                       String month = DatesFormat().extractMonth(dt);
                       int date = dt.day;
+                      if(data.isEmpty){
+                        return Center(child: CircularProgressIndicator(),);
+                      }
                       return Container(
                         padding: EdgeInsets.symmetric(horizontal: 20),
                         width: MediaQuery.of(context).size.width,
@@ -80,14 +97,16 @@ class _HomePageState extends State<HomePage> {
                                     borderRadius: BorderRadius.circular(15),
                                   ),
                                   child: IconButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Get.toNamed("/manageCities");
+                                    },
                                     icon: Icon(Icons.search,color: Colors.white,size:
                                     26,),
                                   ),
                                 ),
                               ],
                             ),
-                            SizedBox(height: 30,),
+                            // SizedBox(height: 30,),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -110,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 30,),
+                            SizedBox(height: 20,),
                             Row(
                               children: [
                                 Expanded(
@@ -159,7 +178,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 30,),
+                            SizedBox(height: 20,),
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 15,
                                   vertical: 20),
@@ -218,7 +237,10 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(height: 20,),
                   Consumer<ProviderService>(
                       builder: (ctx, value, child) {
-                        var data = value.getHourlyData();
+                        var data = value.hourlyData();
+                        if(data.isEmpty){
+                          return Center(child: CircularProgressIndicator(),);
+                        }
                         return Container(
                           height: 120,
                           padding: EdgeInsets.symmetric(horizontal: 22),
@@ -318,7 +340,10 @@ class _HomePageState extends State<HomePage> {
                               SizedBox(height: 20,),
                               Consumer<ProviderService>(
                                 builder: (ctx, value, child) {
-                                  var data = value.getDayWiseData();
+                                  var data = value.dayWiseData();
+                                  if(data.isEmpty){
+                                    return Center(child: CircularProgressIndicator(),);
+                                  }
                                   return ListView.builder(
                                     physics: NeverScrollableScrollPhysics(),
                                     shrinkWrap: true,
@@ -372,14 +397,19 @@ class _HomePageState extends State<HomePage> {
                               SizedBox(height: 20,),
                               Consumer<ProviderService>(
                                   builder: (ctx, value, child) {
-                                    var data = value.getWeatherData();
-                                    var sunrise = DateTime.fromMillisecondsSinceEpoch(data[0].sunrise);
+                                    var data = value.weatherData();
+                                    var sunrise = DateTime
+                                        .fromMillisecondsSinceEpoch(data[0]
+                                        .sunrise * 1000);
                                     var sunset = DateTime
                                         .fromMillisecondsSinceEpoch(data[0]
-                                        .sunset);
+                                        .sunset * 1000);
                                     var sunriseTime = DatesFormat().extractHour12Format(sunrise);
                                     var sunsetTime = DatesFormat()
                                         .extractHour12Format(sunset);
+                                    if(data.isEmpty){
+                                      return Center(child: CircularProgressIndicator(),);
+                                    }
                                     return Container(
                                       padding: EdgeInsets.symmetric(horizontal: 40,
                                           vertical: 20),

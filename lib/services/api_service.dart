@@ -65,6 +65,25 @@ class ApiService {
     }
   }
 
+  Future<List> getSuggestions({required String city}) async{
+    var url = Uri.parse("${baseUrl}geo/1"
+        ".0/direct?q=$city&limit=5&appid=$apiKey");
+    try {
+      final response = await http.get(url);
+      if(response.statusCode == 200){
+        var data = jsonDecode(response.body);
+        return data;
+      }
+      else {
+        print(response.statusCode);
+        return [];
+      }
+    } catch (e) {
+      print("Error on API_suggestions: $e");
+      return [];
+    }
+  }
+
   // // image
   // Future<void> getImage(String img) async{
   //   var url = Uri.parse("${baseUrl}img/wn/$img@2x.png");  // 1,2,4

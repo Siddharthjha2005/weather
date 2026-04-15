@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:weather/models/hourly_model.dart';
+import 'package:weather/models/suggestion_model.dart';
 import 'package:weather/models/weather_model.dart';
 import 'package:weather/services/api_service.dart';
 
@@ -7,18 +8,21 @@ import '../models/daywise_model.dart';
 
 class ProviderService extends ChangeNotifier{
 
-  final List<WeatherModel> _weatherData = [];
-  final List<HourlyModel> _hourlyData = [];
-  final List<DayWiseModel> _dayWiseData = [];
+  late List<WeatherModel> _weatherData = [];
+  late List<HourlyModel> _hourlyData = [];
+  late List<DayWiseModel> _dayWiseData = [];
+  late List<SuggestionModel> _suggestionsData = [];
 
   // get value
-  List<WeatherModel> getWeatherData() => _weatherData;
-  List<HourlyModel> getHourlyData() => _hourlyData;
-  List<DayWiseModel> getDayWiseData() => _dayWiseData;
+  List<WeatherModel> weatherData() => _weatherData;
+  List<HourlyModel> hourlyData() => _hourlyData;
+  List<DayWiseModel> dayWiseData() => _dayWiseData;
+  List<SuggestionModel> suggestionsData() => _suggestionsData;
 
   // event 
   Future<void> getWeather({String city="Mumbai"}) async{
     try {
+      _weatherData = [];
       var data = await ApiService().getWeather(city: city);
       _weatherData.add(WeatherModel(cityName: data["city"]["name"], dayDate:
       data["list"][0]["dt_txt"],
@@ -40,6 +44,7 @@ class ProviderService extends ChangeNotifier{
   // Hourly forecast
   Future<void> getHourly({String city="Mumbai"}) async{
     try {
+      _hourlyData = [];
       var data = await ApiService().getHourly(city: city);
       data.forEach((hour){
         _hourlyData.add(HourlyModel(time: hour["dt_txt"], weatherIcon:
@@ -54,6 +59,7 @@ class ProviderService extends ChangeNotifier{
   // day wise
   Future<void> getDayWise({String city="Mumbai"}) async{
     try {
+      _dayWiseData = [];
       var data = await ApiService().getDayWise(city: city);
       data.forEach((day){
         var dateTime = DateTime.parse(day["dt_txt"]);
@@ -70,5 +76,21 @@ class ProviderService extends ChangeNotifier{
       print("Error on Provider_dayWise: $e");
     }
   }
+
+  // suggestions
+  Future<void> getSuggestions({required String city}) async{
+    try {
+      _suggestionsData = [];
+      var data = await ApiService().getSuggestions(city: city);
+      data.forEach((d){
+        _suggestionsData.add(SuggestionModel(cityName: d["name"],state:
+        d["state"],country: d["country"]));
+      });
+      notifyListeners();
+    } catch (e) {
+      print("Error on Provider_suggestions: $e");
+    }
+  }
+
 
 }
